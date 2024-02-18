@@ -1,15 +1,15 @@
-import sys
+import sys,os,signal
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout
 from PyQt5.QtCore import QProcess, pyqtSlot
 # font
 from PyQt5.QtGui import QFont
-
+import utils
 class SubprocessButton(QPushButton):
-    def __init__(self, command, title, parent=None):
+    def __init__(self, command, label, parent=None):
         super().__init__(parent)
-        self.title = title
+        self.label = label
         self.setFixedSize(300, 50)
-        self.setText("Start " + self.title)
+        self.setText("Start " + self.label)
         self.setFont(QFont('Arial', 15)) 
         self.command = command
         self.process = QProcess()
@@ -28,22 +28,26 @@ class SubprocessButton(QPushButton):
         if not self.running:
             self.running = True
             self.setStyleSheet("background-color: green;")
-            self.setText(self.title + " running")
-            self.process.start(self.command[0], self.command[1:])
-            print(f"Started {self.command}")
+            self.setText(self.label + " running")           
+            self.process.start(self.command)
+            print(self.command)
+            # print(f"Started {self.label}")
             self.process.finished.connect(self.on_finished)
-
+            
     def kill_subprocess(self):
         if self.running:
-            print(f"Killing {self.title}")
-            self.process.kill()
-            self.on_finished(exitCode=None, exitStatus=0)
-
+            self.setText(self.label + " terminating")
+            killer = QProcess()
+            print("Killing PID", self.process.processId())
+            # os.kill(self.process.processId(), signal.SIGINT)
+            killer.start("kill -SIGINT " + str(self.process.processId()))
+            killed = killer.waitForFinished(1000)
     @pyqtSlot(int, QProcess.ExitStatus)
     def on_finished(self, exitCode, exitStatus):
+        print(f"{self.label} finished with code {exitCode}")
         self.running = False
         self.setStyleSheet("background-color: red;")
-        self.setText("Start " + self.title)
+        self.setText("Start " + self.label)
 
 
 class MainWindow(QWidget):
@@ -52,23 +56,21 @@ class MainWindow(QWidget):
         self.setWindowTitle("Subprocess Controller")
         layout = QGridLayout()
         self.setLayout(layout)
-
-        commands = [
-            ["ros2 launch ur_robot_driver ur_robot_driver.launch.py"],
-            ["./home/hydran00/ecography_ws/tcp_endpoint.sh"],
-            ["echo", "Process 2"],
-            ["echo", "Process 3"],
-            ["echo", "Process 4"]
-        ]
-
-        title = "Robot environment"
-        button_launch = SubprocessButton(commands[0], title)
-        layout.addWidget(button_launch, 0, 0)
         
-        title = "ROS-TCP Connector"
-        button_launch = SubprocessButton(commands[1], title)
-        layout.addWidget(button_launch, 0, 1)
-
+        # read cmds and labels from file
+        commands = utils.read_from_file("commands.txt")
+        labels = utils.read_from_file("labels.txt")
+        if(len(commands) != len(labels)):
+            print("Error: commands and labels have different lengths")
+            sys.exit(1)
+        # add buttons
+        print("Commands is ",commands)
+        for button in range(len(commands)):
+            print("Creating button for")
+            print(commands[button])
+            print(labels[button])
+            button_launch = SubprocessButton(commands[button], labels[button])
+            layout.addWidget(button_launch, 0, button)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
