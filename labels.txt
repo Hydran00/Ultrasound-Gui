@@ -1,6 +1,4 @@
 Robot environment
 ROS-TCP Connector
-Test
-Test
-Test
+Screen Publisher
 Test

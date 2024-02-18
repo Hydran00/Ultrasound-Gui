@@ -1,7 +1,10 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit
-from PyQt5.QtCore import Qt, QProcess, pyqtSlot
-from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtCore import QProcess, pyqtSlot, QProcess
+from PyQt5.QtGui import QImage
+import sys, os
+import cv2
 import utils
 
 class SubprocessButton(QPushButton):
@@ -9,16 +12,15 @@ class SubprocessButton(QPushButton):
         super().__init__(parent)
         self.label = label
         self.output_widget = output_widget
-        self.setFixedSize(500, 200)
+        self.setFixedSize(200, 100)
         self.setText("Start " + self.label)
-        self.setFont(QFont('Arial', 18)) 
+        self.setFont(QFont('Arial', 12)) 
         self.command = command
         self.process = QProcess()
         self.running = False
         self.setStyleSheet("background-color: red;")
         self.clicked.connect(self.toggle_subprocess)
 
-    @pyqtSlot()
     def toggle_subprocess(self):
         if self.running:
             self.kill_subprocess()
@@ -31,33 +33,27 @@ class SubprocessButton(QPushButton):
             self.setStyleSheet("background-color: green;")
             self.setText(self.label + " running")           
             self.process.start(self.command)
-            print(self.command)
             self.process.readyReadStandardOutput.connect(self.read_output)
             self.process.readyReadStandardError.connect(self.read_output)
             self.process.finished.connect(self.on_finished)
             
     def kill_subprocess(self):
         if self.running:
-            self.setText("Terminating")
+            self.setText(self.label + " terminating")
             killer = QProcess()
-            print("Killing PID", self.process.processId())
-            # os.kill(self.process.processId(), signal.SIGINT)
             killer.start("kill -SIGINT " + str(self.process.processId()))
             killed = killer.waitForFinished(1000)
-    @pyqtSlot()
+
     def read_output(self):
         output = self.process.readAllStandardOutput().data().decode()
         error = self.process.readAllStandardError().data().decode()
         output_text = output + error
         self.output_widget.append(output_text)
 
-    @pyqtSlot(int, QProcess.ExitStatus)
     def on_finished(self, exitCode, exitStatus):
-        print(f"{self.label} finished with code {exitCode}")
         self.running = False
         self.setStyleSheet("background-color: red;")
         self.setText("Start " + self.label)
-
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -66,20 +62,41 @@ class MainWindow(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        
+
+        # Create QLabel to display the current frame
+        self.frame_label = QLabel()
+        # self.frame_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.frame_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addWidget(self.frame_label, 0, 2, -1, 1)  # Span all rows
+
+        # Start the QTimer to update the frame
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(40)  # Update every 40 milliseconds (25 frames per second)
+
         # Dictionary to hold buttons and their associated text boxes
         self.button_textbox_map = {}
 
-        # add buttons
+        # add buttons and text boxes
         commands = utils.read_from_file("commands.txt")
         labels = utils.read_from_file("labels.txt")
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
-            output_textbox.setMinimumWidth(500)
+            output_textbox.setMinimumSize(400, 200)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
+            
             button_launch = SubprocessButton(command, labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
             self.button_textbox_map[button_launch] = output_textbox
+
+    def update_frame(self):
+        if(not os.path.exists("ultrasound_screen.jpg")):
+            return
+        frame = cv2.imread('/home/hydran00/ultrasound_env/ultrasound-gui/ultrasound_screen.jpg')
+        if frame is not None:
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pixmap = QPixmap.fromImage(QImage(rgb_frame.data, rgb_frame.shape[1], rgb_frame.shape[0], QImage.Format_RGB888))
+            self.frame_label.setPixmap(pixmap.scaled(self.frame_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

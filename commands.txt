@@ -1,6 +1,4 @@
 ros2 launch projects victims.launch.py
 ros2 launch ros_tcp_endpoint endpoint.launch.py
-ls
-ls
-ls
+ros2 run screen_publisher screen_publisher
 ls
