@@ -5,6 +5,12 @@ from PyQt5.QtCore import QProcess, pyqtSlot, QProcess
 from PyQt5.QtGui import QImage
 import sys, os
 import cv2
+import subprocess
+os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
+#source ros environment
+subprocess.run("assets/source ros_source", shell=True)
+
+
 import utils
 
 class SubprocessButton(QPushButton):
@@ -12,7 +18,7 @@ class SubprocessButton(QPushButton):
         super().__init__(parent)
         self.label = label
         self.output_widget = output_widget
-        self.setFixedSize(200, 100)
+        self.setFixedSize(300, 150)
         self.setText("Start " + self.label)
         self.setFont(QFont('Arial', 12)) 
         self.command = command
@@ -78,8 +84,8 @@ class MainWindow(QWidget):
         self.button_textbox_map = {}
 
         # add buttons and text boxes
-        commands = utils.read_from_file("commands.txt")
-        labels = utils.read_from_file("labels.txt")
+        commands = utils.read_from_file("assets/commands.txt")
+        labels = utils.read_from_file("assets/labels.txt")
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
             output_textbox.setMinimumSize(400, 200)  # Set minimum size
@@ -92,7 +98,7 @@ class MainWindow(QWidget):
     def update_frame(self):
         if(not os.path.exists("ultrasound_screen.jpg")):
             return
-        frame = cv2.imread('/home/hydran00/ultrasound_env/ultrasound-gui/ultrasound_screen.jpg')
+        frame = cv2.imread('ultrasound_screen.jpg')
         if frame is not None:
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pixmap = QPixmap.fromImage(QImage(rgb_frame.data, rgb_frame.shape[1], rgb_frame.shape[0], QImage.Format_RGB888))

@@ -1,0 +1,6 @@
+#!/bin/zsh
+source /opt/ros/humble/setup.zsh
+source ~/ultrasound_ws/install/setup.zsh
+source ~/shelfino_ws/install/setup.zsh
+source ~/ros_ws/install/setup.zsh
+echo "testtt"
