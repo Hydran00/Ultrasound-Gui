@@ -79,20 +79,33 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(40)  # Update every 40 milliseconds (25 frames per second)
 
-        # Dictionary to hold buttons and their associated text boxes
+        # Dictionary to hold buttons, text boxes, and scroll buttons
         self.button_textbox_map = {}
 
-        # add buttons and text boxes
+        # add buttons, text boxes, and scroll buttons
         commands = utils.read_from_file("assets/commands.txt")
         labels = utils.read_from_file("assets/labels.txt")
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
             output_textbox.setMinimumSize(800, 400)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
-            
+
+            scroll_button = QPushButton("AutoScroll")
+            scroll_button.setFixedSize(200, 30)
+            scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
+            layout.addWidget(scroll_button, i, 2)
+
             button_launch = SubprocessButton(command, labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
-            self.button_textbox_map[button_launch] = output_textbox
+            self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
+
+    def toggle_autoscroll(self, button, text_box):
+        is_read_only = text_box.isReadOnly()
+        text_box.setReadOnly(not is_read_only)
+        if is_read_only:
+            button.setStyleSheet("background-color: none; color: black;")
+        else:
+            button.setStyleSheet("background-color: grey; color: black;")
 
     def update_frame(self):
         if(not os.path.exists("ultrasound_screen.jpg")):
