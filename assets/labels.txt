@@ -1,4 +1,3 @@
 Robot environment
 ROS-TCP Connector
-Screen Publisher
-Test
+Haptic control

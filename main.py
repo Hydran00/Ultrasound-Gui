@@ -6,19 +6,18 @@ from PyQt5.QtGui import QImage
 import sys, os
 import cv2
 import subprocess
-os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
-#source ros environment
-subprocess.run("assets/source ros_source", shell=True)
-
-
 import utils
+# os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
+# source ros environment
+# subprocess.run("source ./assets/ros_source",)
+# rc = subprocess.call("./assets/ros_source.sh",shell=True)
 
 class SubprocessButton(QPushButton):
     def __init__(self, command, label, output_widget, parent=None):
         super().__init__(parent)
         self.label = label
         self.output_widget = output_widget
-        self.setFixedSize(300, 150)
+        self.setFixedSize(500, 200)
         self.setText("Start " + self.label)
         self.setFont(QFont('Arial', 12)) 
         self.command = command
@@ -88,7 +87,7 @@ class MainWindow(QWidget):
         labels = utils.read_from_file("assets/labels.txt")
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
-            output_textbox.setMinimumSize(400, 200)  # Set minimum size
+            output_textbox.setMinimumSize(800, 400)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
             
             button_launch = SubprocessButton(command, labels[i], output_textbox)
