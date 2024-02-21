@@ -12,6 +12,7 @@ import utils
 # subprocess.run("source ./assets/ros_source",)
 # rc = subprocess.call("./assets/ros_source.sh",shell=True)
 
+
 class SubprocessButton(QPushButton):
     def __init__(self, command, label, output_widget, parent=None):
         super().__init__(parent)
@@ -29,6 +30,8 @@ class SubprocessButton(QPushButton):
     def toggle_subprocess(self):
         if self.running:
             self.kill_subprocess()
+            if self.label == "Motion Handle":
+                os.system('ros2 run controller_manager spawner motion_control_handle -c /controller_manager')
         else:
             self.start_subprocess()
 
@@ -53,12 +56,13 @@ class SubprocessButton(QPushButton):
         output = self.process.readAllStandardOutput().data().decode()
         error = self.process.readAllStandardError().data().decode()
         output_text = output + error
-        self.output_widget.append(output_text)
+        if self.output_widget is not None:
+            self.output_widget.append(output_text)
 
     def on_finished(self, exitCode, exitStatus):
         self.running = False
         self.setStyleSheet("background-color: red;")
-        self.setText("Start " + self.label)
+        self.setText(self.label)
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -95,9 +99,20 @@ class MainWindow(QWidget):
             scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
             layout.addWidget(scroll_button, i, 2)
 
-            button_launch = SubprocessButton(command, labels[i], output_textbox)
+            button_launch = SubprocessButton(command, "Start"+labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
             self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
+
+        # add interactive marker 
+        cmd = 'ros2 run controller_manager spawner motion_control_handle -c /controller_manager'
+        button_launch = SubprocessButton(cmd, "Start Motion Handle", None)
+        layout.addWidget(button_launch, len(commands), 0)
+
+        # add interactive marker 
+        cmd = 'ros2 run controller_manager unspawner motion_control_handle -c /controller_manager'
+        button_launch = SubprocessButton(cmd, "Kill Motion Handle", None)
+        layout.addWidget(button_launch, len(commands), 1)
+
 
     def toggle_autoscroll(self, button, text_box):
         is_read_only = text_box.isReadOnly()
