@@ -1,5 +1,8 @@
 #vscode
-vscode
-vscode/
+.vscode
+.vscode/
 launcher.py
 __pycache__
+*.zsh
+*.bash
+*.sh

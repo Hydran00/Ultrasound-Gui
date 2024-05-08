@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
-from PyQt5.QtCore import QProcess, pyqtSlot, QProcess
-from PyQt5.QtGui import QImage
+from PyQt5.QtCore import QProcess, pyqtSlot
+from PyQt5.QtGui import QImage,QColor  
 import sys, os
 import subprocess
 import utils
@@ -12,11 +12,7 @@ from std_msgs.msg import String
 from example_interfaces.srv import SetBool
 from std_msgs.msg import Bool
 from rcl_interfaces.srv import SetParameters
-
-# os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
-# source ros environment
-# subprocess.run("./ros_source.sh")
-# subprocess.call("ros_source.sh", shell=True)
+import qdarkstyle  # Import the qdarkstyle library
 
 class SubprocessButton(QPushButton):
     def __init__(self, command, label, output_widget, parent=None):
@@ -29,7 +25,12 @@ class SubprocessButton(QPushButton):
         self.command = command
         self.process = QProcess()
         self.running = False
-        self.setStyleSheet("background-color: red;")
+        self.color_index = 0
+        # extract color from qdark theme
+        self.inactive_process_button_style = self.styleSheet() 
+        self.active_process_button_color = QColor(87,150,244)
+
+        self.set_inactive_process_button_color()
         self.clicked.connect(self.toggle_subprocess)
 
     def toggle_subprocess(self):
@@ -40,10 +41,28 @@ class SubprocessButton(QPushButton):
         else:
             self.start_subprocess()
 
+    def set_active_process_button_color(self):
+        self.setStyleSheet("background-color: " + self.active_process_button_color.name() + ";")
+
+    def set_inactive_process_button_color(self):
+        self.setStyleSheet(self.inactive_process_button_style)
+
     def start_subprocess(self):
+        if "haptic" in self.command:
+            # disable the other buttons that have "handle" in command
+            for button in self.parent().button_textbox_map.keys():
+                if button != self and "handle" in button.command:
+                    button.setDisabled(True)
+        if "handle" in self.command:
+            # disable the other buttons that have "handle" in command
+            for button in self.parent().button_textbox_map.keys():
+                if button != self and "haptic" in button.command:
+                    button.setDisabled(True)
+
         if not self.running:
             self.running = True
-            self.setStyleSheet("background-color: green;")
+            # self.setStyleSheet("background-color: green;")
+            self.set_active_process_button_color()
             self.setText(self.label + " running")           
             self.process.start(self.command)
             self.process.readyReadStandardOutput.connect(self.read_output)
@@ -66,14 +85,14 @@ class SubprocessButton(QPushButton):
 
     def on_finished(self, exitCode, exitStatus):
         self.running = False
-        self.setStyleSheet("background-color: red;")
+        # self.setStyleSheet("background-color: red;")
+        self.set_inactive_process_button_color()
         self.setText(self.label)
 
 class MainWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-
         self.bounding_box = int(0)
         self.scaling_factor = float(1)
 
@@ -81,6 +100,9 @@ class MainWindow(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
+
+        # Apply the PyQTDark theme
+        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
         # Create QLabel to display the current frame
         self.frame_label = QLabel()
@@ -101,7 +123,7 @@ class MainWindow(QWidget):
         labels = utils.read_from_file("assets/labels.txt")
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
-            output_textbox.setMinimumSize(600, 200)  # Set minimum size
+            output_textbox.setMinimumSize(800, 200)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
 
             scroll_button = QPushButton("AutoScroll")
@@ -109,6 +131,7 @@ class MainWindow(QWidget):
             scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
             layout.addWidget(scroll_button, i, 2)
 
+            print("Adding button for command: ", command)
             button_launch = SubprocessButton(command, "Start " + labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
             self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
@@ -214,5 +237,4 @@ if __name__ == "__main__":
         sys.exit(app.exec_())
     finally:
         # Clean up when the application is closed
-        ros_node.destroy_node()
         rclpy.shutdown()
