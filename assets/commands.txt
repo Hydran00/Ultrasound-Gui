@@ -1,4 +1,3 @@
 ros2 launch motion_planner full_env.launch.py
 ros2 launch haptic_control haptic_control.launch.py haption_ws_path:=/home/nardi/haption_ws/
 ros2 launch ros_tcp_endpoint endpoint.launch.py
-/home/nardi/Desktop/Ultrasound-Builds/app.x86_64

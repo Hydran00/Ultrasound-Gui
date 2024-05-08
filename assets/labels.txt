@@ -1,4 +1,3 @@
 Robot Controller
 Haptic control
 Unity TCP-Enpoint
-VR Game
