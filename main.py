@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import QProcess, pyqtSlot
 from PyQt5.QtGui import QImage,QColor  
+from PyQt5 import QtGui
 import sys, os
 import subprocess
 import utils
@@ -97,6 +98,7 @@ class MainWindow(QWidget):
         self.scaling_factor = float(1)
 
         self.setWindowTitle("Control Panel")
+        self.setWindowIcon(QtGui.QIcon('assets/logo.png'))
         layout = QGridLayout()
         self.setLayout(layout)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
