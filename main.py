@@ -15,6 +15,18 @@ from std_msgs.msg import Bool
 from rcl_interfaces.srv import SetParameters
 import qdarkstyle  # Import the qdarkstyle library
 
+import subprocess
+# source ros2 envs
+shell_type = os.readlink('/proc/%d/exe' % os.getppid())
+if "zsh" in shell_type:
+    subprocess.call(". ./ros_source.zsh", executable="/bin/zsh", shell=True)
+elif "bash" in shell_type:
+    # assume Bash
+    subprocess.call(". ./ros_source.sh", shell=True)
+else:
+    print("Unknown shell, supported are zsh and bash")
+    exit(1)
+
 class SubprocessButton(QPushButton):
     def __init__(self, command, label, output_widget, parent=None):
         super().__init__(parent)
