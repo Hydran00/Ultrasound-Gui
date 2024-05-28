@@ -22,7 +22,7 @@ if "zsh" in shell_type:
     subprocess.call(". ./ros_source.zsh", executable="/bin/zsh", shell=True)
 elif "bash" in shell_type:
     # assume Bash
-    subprocess.call(". ./ros_source.sh", shell=True)
+    subprocess.call(". ./ros_source.sh",  executable="/bin/bash", shell=True)
 else:
     print("Unknown shell, supported are zsh and bash")
     exit(1)
