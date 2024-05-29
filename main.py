@@ -1,11 +1,22 @@
+import subprocess
+import sys, os
+# source ros2 envs
+# shell_type = os.readlink('/proc/%d/exe' % os.getppid())
+# if "zsh" in shell_type:
+#     subprocess.call(". ./ros_source.zsh", executable="/bin/zsh", shell=True)
+# elif "bash" in shell_type:
+#     # assume Bash
+#     subprocess.call(". ./ros_source.sh",  executable="/bin/bash", shell=True)
+# else:
+#     print("Unknown shell, supported are zsh and bash")
+#     exit(1)
+
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import QProcess, pyqtSlot
 from PyQt5.QtGui import QImage,QColor  
 from PyQt5 import QtGui
-import sys, os
-import subprocess
 import utils
 import rclpy
 from rclpy.node import Node
@@ -15,17 +26,6 @@ from std_msgs.msg import Bool
 from rcl_interfaces.srv import SetParameters
 import qdarkstyle  # Import the qdarkstyle library
 
-import subprocess
-# source ros2 envs
-shell_type = os.readlink('/proc/%d/exe' % os.getppid())
-if "zsh" in shell_type:
-    subprocess.call(". ./ros_source.zsh", executable="/bin/zsh", shell=True)
-elif "bash" in shell_type:
-    # assume Bash
-    subprocess.call(". ./ros_source.sh",  executable="/bin/bash", shell=True)
-else:
-    print("Unknown shell, supported are zsh and bash")
-    exit(1)
 
 class SubprocessButton(QPushButton):
     def __init__(self, command, label, output_widget, parent=None):
