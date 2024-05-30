@@ -24,7 +24,7 @@ if [[ ":$COLCON_PREFIX_PATH:" != *":/home/nardi/Ultrasound-Demo/ultrasound_ws/in
   echo "ultrasound_ws sourced"
 fi
 # haptic interface
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/hydran00/haption_ws/src/haption_raptor_api/Dependencies/RaptorAPI/bin/Linux/glibc-2.35/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/nardi/Ultrasound-Demo/haption_ws/src/haption_raptor_api/Dependencies/RaptorAPI/bin/Linux/glibc-2.35/
 if [[ ":$COLCON_PREFIX_PATH:" != *":/home/nardi/Ultrasound-Demo/haption_ws/install:"* ]]; then
     source /home/nardi/Ultrasound-Demo/haption_ws/install/setup.bash
     echo "haption_ws sourced"
