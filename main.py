@@ -83,7 +83,8 @@ class SubprocessButton(QPushButton):
             self.process.finished.connect(self.on_finished)
             
     def kill_subprocess(self):
-        if self.running:
+        # VR app must be closed manually to avoid crashing SteamVR
+        if self.running and "VR" not in self.label: 
             self.setText(self.label + " terminating")
             killer = QProcess()
             killer.start("kill -SIGINT " + str(self.process.processId()))
