@@ -90,8 +90,8 @@ class SubprocessButton(QPushButton):
             killed = killer.waitForFinished(1000)
 
     def read_output(self):
-        output = self.process.readAllStandardOutput().data().decode()
-        error = self.process.readAllStandardError().data().decode()
+        output = self.process.readAllStandardOutput().data().decode()[:-1]
+        error = self.process.readAllStandardError().data().decode()[:-1]
         output_text = output + error
         if self.output_widget is not None:
             self.output_widget.append(output_text)
@@ -149,6 +149,7 @@ class MainWindow(QWidget):
             button_launch = SubprocessButton(command, labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
             self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
+
 
         handle_layout = QGridLayout()
         # add interactive marker
