@@ -2,6 +2,7 @@
 # check if the paths are not in $COLCON_PREFIX_PATH
 
 # ROS2
+export ROS_LOCALHOST_ONLY=1
 source /opt/ros/humble/setup.bash
 # ur workspace
 if [[ ":$COLCON_PREFIX_PATH:" != *":/home/nardi/Ultrasound-Demo/robot_ws/ur_ws/install:"* ]]; then
@@ -14,7 +15,7 @@ if [[ ":$COLCON_PREFIX_PATH:" != *":/home/nardi/Ultrasound-Demo/robot_ws/control
   echo "controller_ws sourced"
 fi
 # force torque sensor
-if [[ ":$COLCON_PREFIX_PATH:" != *":/home/nardi/Ultrasound-Demo/robot_ws/force_torque_sensor_ws/install:"* ]]; then
+if [[ ":$COLCON_PREFIX_PATH:" != *":/home/nardi/Ultrasound-Demo/robot_ws/bota_ws/install:"* ]]; then
   source /home/nardi/Ultrasound-Demo/robot_ws/bota_ws/install/setup.bash
   echo "force_torque_sensor_ws sourced"
 fi

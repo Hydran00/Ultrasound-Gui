@@ -136,20 +136,31 @@ class MainWindow(QWidget):
         # add buttons, text boxes, and scroll buttons
         commands = utils.read_from_file("assets/commands.txt")
         labels = utils.read_from_file("assets/labels.txt")
+        text_box_command_layouts = []
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
             output_textbox.setMinimumSize(800, 200)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
 
+            text_box_command_layout = QGridLayout()
+
             scroll_button = QPushButton("AutoScroll")
             scroll_button.setFixedSize(200, 30)
             scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
-            layout.addWidget(scroll_button, i, 2)
+            text_box_command_layout.addWidget(scroll_button, 0, 0)
+            
+            clear_button = QPushButton("Clear")
+            clear_button.setFixedSize(200, 30)
+            clear_button.clicked.connect(lambda checked, tb=output_textbox: tb.clear())
+            text_box_command_layout.addWidget(clear_button, 1, 0)
 
             print("Adding button for command: ", command)
             button_launch = SubprocessButton(command, labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
             self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
+            text_box_command_layouts.append(text_box_command_layout)
+
+            layout.addLayout(text_box_command_layout, i, 2)
 
 
         handle_layout = QGridLayout()
