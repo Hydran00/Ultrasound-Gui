@@ -21,9 +21,7 @@ import utils
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from example_interfaces.srv import SetBool
 from std_msgs.msg import Bool
-from rcl_interfaces.srv import SetParameters
 import qdarkstyle  # Import the qdarkstyle library
 
 

@@ -1,20 +1,26 @@
-import sys
+import subprocess
+import sys, os
+# source ros2 envs
+# shell_type = os.readlink('/proc/%d/exe' % os.getppid())
+# if "zsh" in shell_type:
+#     subprocess.call(". ./ros_source.zsh", executable="/bin/zsh", shell=True)
+# elif "bash" in shell_type:
+#     # assume Bash
+#     subprocess.call(". ./ros_source.sh",  executable="/bin/bash", shell=True)
+# else:
+#     print("Unknown shell, supported are zsh and bash")
+#     exit(1)
+
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont, QColor, QImage, QPixmap
-from PyQt6 import QtCore
-import subprocess
+from PyQt6.QtGui import QFont, QPixmap, QColor, QIcon
+from PyQt6.QtCore import QProcess, pyqtSlot
 import utils
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from example_interfaces.srv import SetBool
 from std_msgs.msg import Bool
-from rcl_interfaces.srv import SetParameters
-import qdarktheme
-import shlex
-import cv2
-  # Import the qdarkstyle library
+import qdarktheme  # Updated import for qdarktheme
 
 class SubprocessButton(QPushButton):
     def __init__(self, command, label, output_widget, parent=None):
@@ -22,15 +28,16 @@ class SubprocessButton(QPushButton):
         self.label = label
         self.output_widget = output_widget
         self.setFixedSize(500, 200)
-        self.setText("Start " + self.label)
+        self.setText(self.label)
         self.setFont(QFont('Arial', 12)) 
         self.command = command
-        self.process = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.process = QProcess()
         self.running = False
         self.color_index = 0
         # extract color from qdark theme
         self.inactive_process_button_style = self.styleSheet() 
-        self.active_process_button_color = QColor(87,150,244)
+        self.active_process_button_color = QColor(87, 150, 244)
+
         self.set_inactive_process_button_color()
         self.clicked.connect(self.toggle_subprocess)
 
@@ -38,7 +45,7 @@ class SubprocessButton(QPushButton):
         if self.running:
             self.kill_subprocess()
             if self.label == "Motion Handle":
-                subprocess.run(['ros2', 'run', 'controller_manager', 'spawner', 'motion_control_handle', '-c', '/controller_manager'])
+                os.system('ros2 run controller_manager spawner motion_control_handle -c /controller_manager')
         else:
             self.start_subprocess()
 
@@ -49,53 +56,54 @@ class SubprocessButton(QPushButton):
         self.setStyleSheet(self.inactive_process_button_style)
 
     def start_subprocess(self):
-        if "haptic" in self.command:
-            # disable the other buttons that have "handle" in command
-            for button in self.parent().button_textbox_map.keys():
-                if button != self and "handle" in button.command:
-                    button.setDisabled(True)
-        if "handle" in self.command:
-            # disable the other buttons that have "handle" in command
-            for button in self.parent().button_textbox_map.keys():
-                if button != self and "haptic" in button.command:
-                    button.setDisabled(True)
-
         if not self.running:
             self.running = True
             self.set_active_process_button_color()
             self.setText(self.label + " running")           
-            self.process = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            self.read_output()
-
+            self.process.start(self.command)
+            self.process.readyReadStandardOutput.connect(self.read_output)
+            self.process.readyReadStandardError.connect(self.read_output)
+            self.process.finished.connect(self.on_finished)
+            
     def kill_subprocess(self):
-        if self.running:
+        # VR app must be closed manually to avoid crashing SteamVR
+        if self.running and "VR" not in self.label: 
             self.setText(self.label + " terminating")
-            self.process.terminate()
+            killer = QProcess()
+            killer.start("kill -SIGINT " + str(self.process.processId()))
+            killed = killer.waitForFinished(1000)
 
     def read_output(self):
-        output, error = self.process.communicate()
-        output_text = output.decode() + error.decode()
+        output = self.process.readAllStandardOutput().data().decode()[:-1]
+        error = self.process.readAllStandardError().data().decode()[:-1]
+        output_text = output + error
         if self.output_widget is not None:
             self.output_widget.append(output_text)
 
-class MainWindow(QWidget):
+    def on_finished(self, exitCode, exitStatus):
+        self.running = False
+        self.set_inactive_process_button_color()
+        self.setText(self.label)
 
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.bounding_box = int(0)
         self.scaling_factor = float(1)
 
         self.setWindowTitle("Control Panel")
+        self.setWindowIcon(QIcon('assets/logo.png'))
         layout = QGridLayout()
         self.setLayout(layout)
-        self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         # Apply the PyQTDark theme
-        qdarktheme.setup_theme()
+        app.setStyleSheet(qdarktheme.load_stylesheet("dark"))  # Updated method for loading dark theme
+        # qdarktheme.setup_theme()
 
         # Create QLabel to display the current frame
         self.frame_label = QLabel()
-        self.frame_label.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
+        self.frame_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         layout.addWidget(self.frame_label, 0, 2, -1, 1)  # Span all rows
 
         # Start the QTimer to update the frame
@@ -108,31 +116,52 @@ class MainWindow(QWidget):
         # add buttons, text boxes, and scroll buttons
         commands = utils.read_from_file("assets/commands.txt")
         labels = utils.read_from_file("assets/labels.txt")
+        text_box_command_layouts = []
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
             output_textbox.setMinimumSize(800, 200)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
 
+            text_box_command_layout = QGridLayout()
+
             scroll_button = QPushButton("AutoScroll")
             scroll_button.setFixedSize(200, 30)
             scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
-            layout.addWidget(scroll_button, i, 2)
+            text_box_command_layout.addWidget(scroll_button, 0, 0)
+            
+            clear_button = QPushButton("Clear")
+            clear_button.setFixedSize(200, 30)
+            clear_button.clicked.connect(lambda checked, tb=output_textbox: tb.clear())
+            text_box_command_layout.addWidget(clear_button, 1, 0)
 
             print("Adding button for command: ", command)
-            
-            button_launch = SubprocessButton(shlex.split(command), "Start " + labels[i], output_textbox)
+            button_launch = SubprocessButton(command, labels[i], output_textbox)
             layout.addWidget(button_launch, i, 0)
             self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
+            text_box_command_layouts.append(text_box_command_layout)
 
+            layout.addLayout(text_box_command_layout, i, 2)
+
+        handle_layout = QGridLayout()
         # add interactive marker
-        cmd = ['ros2', 'run', 'controller_manager', 'spawner', 'motion_control_handle', '-c', '/controller_manager']
+        cmd = 'ros2 run controller_manager spawner motion_control_handle -c /controller_manager'
         button_launch = SubprocessButton(cmd, "Start Motion Handle", None)
-        layout.addWidget(button_launch, len(commands), 0)
-
+        button_launch.setFixedSize(500, 100)
+        handle_layout.addWidget(button_launch, 0, 0)
+        
         # add interactive marker 
-        cmd = ['ros2', 'run', 'controller_manager', 'unspawner', 'motion_control_handle', '-c', '/controller_manager']
+        cmd = 'ros2 run controller_manager unspawner motion_control_handle -c /controller_manager'
         button_launch = SubprocessButton(cmd, "Kill Motion Handle", None)
-        layout.addWidget(button_launch, len(commands), 1)
+        button_launch.setFixedSize(500, 100)
+        handle_layout.addWidget(button_launch, 0, 1)
+        
+        # add ft sensor calibration
+        cmd = 'ros2 service call /bus0/ft_sensor0/reset_wrench rokubimini_msgs/srv/ResetWrench "{desired_wrench: {force: {x: 0.0, y: 0.0, z: 0.0}, torque: {x: 0.0, y: 0.0, z: 0.0}}}"'
+        button_launch = SubprocessButton(cmd, "Calibrate F/T Sensor", None)
+        button_launch.setFixedSize(500, 100)
+        handle_layout.addWidget(button_launch, 0, 2)
+        
+        layout.addLayout(handle_layout, len(commands), 0, 1, 3)
 
         # Button to toggle bounding_box parameter
         bounding_box_button = QPushButton("Toggle Bounding Box")
@@ -207,7 +236,6 @@ class MainWindow(QWidget):
             self.scaling_factor_edit.setText(str(self.scaling_factor))
         except subprocess.CalledProcessError as e:
             print('Error setting scaling factor')
-        
 
     def toggle_autoscroll(self, button, text_box):
         is_read_only = text_box.isReadOnly()
@@ -216,14 +244,6 @@ class MainWindow(QWidget):
             button.setStyleSheet("background-color: none; color: black;")
         else:
             button.setStyleSheet("background-color: grey; color: black;")
-    def update_frame(self):
-        if(not os.path.exists("ultrasound_screen.jpg")):
-            return
-        frame = cv2.imread('ultrasound_screen.jpg')
-        if frame is not None:
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            pixmap = QPixmap.fromImage(QImage(rgb_frame.data, rgb_frame.shape[1], rgb_frame.shape[0], QImage.Format_RGB888))
-            self.frame_label.setPixmap(pixmap.scaled(self.frame_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
 if __name__ == "__main__":
     rclpy.init(args=None)
