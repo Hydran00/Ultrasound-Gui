@@ -1,4 +1,4 @@
-Robot Controller
-Haptic control
+Follower Setup
+Leader Setup
 Unity TCP-Enpoint
 VR App

@@ -11,7 +11,7 @@ import sys, os
 #     print("Unknown shell, supported are zsh and bash")
 #     exit(1)
 
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit, QListWidget, QVBoxLayout, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import QProcess, pyqtSlot
@@ -24,82 +24,8 @@ from std_msgs.msg import String
 from std_msgs.msg import Bool
 import qdarkstyle  # Import the qdarkstyle library
 
-
-class SubprocessButton(QPushButton):
-    def __init__(self, command, label, output_widget, parent=None):
-        super().__init__(parent)
-        self.label = label
-        self.output_widget = output_widget
-        self.setFixedSize(500, 200)
-        self.setText(self.label)
-        self.setFont(QFont('Arial', 12)) 
-        self.command = command
-        self.process = QProcess()
-        self.running = False
-        self.color_index = 0
-        # extract color from qdark theme
-        self.inactive_process_button_style = self.styleSheet() 
-        self.active_process_button_color = QColor(87,150,244)
-
-        self.set_inactive_process_button_color()
-        self.clicked.connect(self.toggle_subprocess)
-
-    def toggle_subprocess(self):
-        if self.running:
-            self.kill_subprocess()
-            if self.label == "Motion Handle":
-                os.system('ros2 run controller_manager spawner motion_control_handle -c /controller_manager')
-        else:
-            self.start_subprocess()
-
-    def set_active_process_button_color(self):
-        self.setStyleSheet("background-color: " + self.active_process_button_color.name() + ";")
-
-    def set_inactive_process_button_color(self):
-        self.setStyleSheet(self.inactive_process_button_style)
-
-    def start_subprocess(self):
-        # if "haptic" in self.command:
-        #     # disable the other buttons that have "handle" in command
-        #     for button in self.parent().button_textbox_map.keys():
-        #         if button != self and "handle" in button.command:
-        #             button.setDisabled(True)
-        # if "handle" in self.command:
-        #     # disable the other buttons that have "handle" in command
-        #     for button in self.parent().button_textbox_map.keys():
-        #         if button != self and "haptic" in button.command:
-        #             button.setDisabled(True)
-
-        if not self.running:
-            self.running = True
-            # self.setStyleSheet("background-color: green;")
-            self.set_active_process_button_color()
-            self.setText(self.label + " running")           
-            self.process.start(self.command)
-            self.process.readyReadStandardOutput.connect(self.read_output)
-            self.process.readyReadStandardError.connect(self.read_output)
-            self.process.finished.connect(self.on_finished)
-            
-    def kill_subprocess(self):
-        # VR app must be closed manually to avoid crashing SteamVR
-        if self.running and "VR" not in self.label: 
-            self.setText(self.label + " terminating")
-            killer = QProcess()
-            killer.start("kill -SIGINT " + str(self.process.processId()))
-            killed = killer.waitForFinished(1000)
-
-    def read_output(self):
-        output = self.process.readAllStandardOutput().data().decode()[:-1]
-        error = self.process.readAllStandardError().data().decode()[:-1]
-        output_text = output + error
-        if self.output_widget is not None:
-            self.output_widget.append(output_text)
-
-    def on_finished(self, exitCode, exitStatus):
-        self.running = False
-        # self.setStyleSheet("background-color: red;")
-        self.set_inactive_process_button_color()
-        self.setText(self.label)
+from buttons.base import BaseButton
+from buttons.tcp_endpoint import TcpEndpointButton
 
 class MainWindow(QWidget):
 
@@ -137,55 +63,77 @@ class MainWindow(QWidget):
         text_box_command_layouts = []
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
-            output_textbox.setMinimumSize(800, 200)  # Set minimum size
             layout.addWidget(output_textbox, i, 1)
 
-            text_box_command_layout = QGridLayout()
+            text_box_command_layout = QVBoxLayout()
 
-            scroll_button = QPushButton("AutoScroll")
-            scroll_button.setFixedSize(200, 30)
-            scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
-            text_box_command_layout.addWidget(scroll_button, 0, 0)
+            # scroll_button = QCheckBox("AutoScroll")
+            # scroll_button.setFixedSize(100, 30)
+            # scroll_button.clicked.connect(lambda checked, tb=output_textbox, sb=scroll_button: self.toggle_autoscroll(sb, tb))
+            # text_box_command_layout.addWidget(scroll_button, Qt.AlignCenter)
             
             clear_button = QPushButton("Clear")
-            clear_button.setFixedSize(200, 30)
+            clear_button.setFixedSize(100, 30)
             clear_button.clicked.connect(lambda checked, tb=output_textbox: tb.clear())
-            text_box_command_layout.addWidget(clear_button, 1, 0)
+            text_box_command_layout.addWidget(clear_button, Qt.AlignCenter)
 
             print("Adding button for command: ", command)
-            button_launch = SubprocessButton(command, labels[i], output_textbox)
+            
+            if "ros_tcp_endpoint" in command:
+                # Select the network interface to use
+                net_selection_layout = QVBoxLayout()
+                label = QLabel()
+                label.setText("Select the network interface:")
+                label.setAlignment(Qt.AlignLeft)
+                label.setFixedSize(300, 30)
+                net_selection_layout.addWidget(label)
+                self.net_interfaces = utils.get_net_interfaces()
+                self.net_interface_switch = QListWidget()
+                self.net_interface_switch.addItems(self.net_interfaces)
+                # set default interface to the first one
+                self.net_interface_switch.setCurrentRow(0)
+                self.net_interface_switch.setFixedSize(200, 100)
+                # Create the button
+                button_launch = TcpEndpointButton(command, labels[i], output_textbox, self.net_interface_switch)
+                net_selection_layout.addWidget(self.net_interface_switch)
+                text_box_command_layout.addLayout(net_selection_layout, Qt.AlignCenter)
+
+            else:
+                button_launch = BaseButton(command, labels[i], output_textbox)
+            
+            button_launch.setMinimumSize(150, 100)
             layout.addWidget(button_launch, i, 0)
-            self.button_textbox_map[button_launch] = (output_textbox, scroll_button)
+            self.button_textbox_map[button_launch] = (output_textbox)
             text_box_command_layouts.append(text_box_command_layout)
 
             layout.addLayout(text_box_command_layout, i, 2)
 
 
-        handle_layout = QGridLayout()
+        handle_layout = QHBoxLayout()
         # add interactive marker
         cmd = 'ros2 run controller_manager spawner motion_control_handle -c /controller_manager'
-        button_launch = SubprocessButton(cmd, "Start Motion Handle", None)
-        button_launch.setFixedSize(500, 100)
-        handle_layout.addWidget(button_launch, 0, 0)
+        button_launch = BaseButton(cmd, "Start Motion Handle", None)
+        button_launch.setMinimumSize(150, 100)
+        handle_layout.addWidget(button_launch, Qt.AlignCenter)
         
         # add interactive marker 
         cmd = 'ros2 run controller_manager unspawner motion_control_handle -c /controller_manager'
-        button_launch = SubprocessButton(cmd, "Kill Motion Handle", None)
-        button_launch.setFixedSize(500, 100)
-        handle_layout.addWidget(button_launch, 0, 1)
+        button_launch = BaseButton(cmd, "Kill Motion Handle", None)
+        button_launch.setMinimumSize(150, 100)
+        handle_layout.addWidget(button_launch, Qt.AlignCenter)
         
         # add ft sensor calibration
         cmd = 'ros2 service call /bus0/ft_sensor0/reset_wrench rokubimini_msgs/srv/ResetWrench "{desired_wrench: {force: {x: 0.0, y: 0.0, z: 0.0}, torque: {x: 0.0, y: 0.0, z: 0.0}}}"'
-        button_launch = SubprocessButton(cmd, "Calibrate F/T Sensor", None)
-        button_launch.setFixedSize(500, 100)
-        handle_layout.addWidget(button_launch, 0, 2)
+        button_launch = BaseButton(cmd, "Calibrate F/T Sensor", None)
+        button_launch.setMinimumSize(150, 100)
+        handle_layout.addWidget(button_launch, Qt.AlignCenter)
         
-        layout.addLayout(handle_layout, len(commands), 0, 1, 3)
+        layout.addLayout(handle_layout, len(commands), 0, 1, 2)
 
 
         # Button to toggle bounding_box parameter
         bounding_box_button = QPushButton("Toggle Bounding Box")
-        bounding_box_button.setFixedSize(500, 40)
+        bounding_box_button.setMinimumSize(150, 40)
         bounding_box_button.clicked.connect(lambda checked, ros_node=self: ros_node.toggle_bounding_box())
         layout.addWidget(bounding_box_button, len(commands) + 1, 0)
 
@@ -197,13 +145,13 @@ class MainWindow(QWidget):
 
         # Button to decrease scaling factor
         decrease_scaling_factor_button = QPushButton("Decrease Scaling Factor")
-        decrease_scaling_factor_button.setFixedSize(500, 40)
+        decrease_scaling_factor_button.setMinimumSize(150, 40)
         decrease_scaling_factor_button.clicked.connect(lambda checked, ros_node=self: ros_node.decrease_scaling_factor())
         layout.addWidget(decrease_scaling_factor_button, len(commands) + 3, 0)
 
         # Button to increase scaling factor
         increase_scaling_factor_button = QPushButton("Increase Scaling Factor")
-        increase_scaling_factor_button.setFixedSize(500, 40)
+        increase_scaling_factor_button.setMinimumSize(150, 40)
         increase_scaling_factor_button.clicked.connect(lambda checked, ros_node=self: ros_node.increase_scaling_factor())
         layout.addWidget(increase_scaling_factor_button, len(commands) + 4, 0)
 
@@ -256,14 +204,8 @@ class MainWindow(QWidget):
             self.scaling_factor_edit.setText(str(self.scaling_factor))
         except subprocess.CalledProcessError as e:
             print('Error setting scaling factor')
-
-    def toggle_autoscroll(self, button, text_box):
-        is_read_only = text_box.isReadOnly()
-        text_box.setReadOnly(not is_read_only)
-        if is_read_only:
-            button.setStyleSheet("background-color: none; color: black;")
-        else:
-            button.setStyleSheet("background-color: grey; color: black;")
+  
+            
 
 if __name__ == "__main__":
     rclpy.init(args=None)
