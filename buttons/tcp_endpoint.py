@@ -10,8 +10,11 @@ class TcpEndpointButton(BaseButton):
         if not self.running:
             self.running = True
             self.set_active_process_button_color()
-            self.setText(self.label + " running")           
-            self.process.start(self.command + " interface:="+self.net_interface_switch.currentItem().text())
+            self.setText(self.label + " running")    
+            if(self.net_interface_switch.currentItem().text() == "default"):
+                self.process.start(self.command)
+            else:
+                self.process.start(self.command + " interface:="+self.net_interface_switch.currentItem().text())
             self.process.readyReadStandardOutput.connect(self.read_output)
             self.process.readyReadStandardError.connect(self.read_output)
             self.process.finished.connect(self.on_finished)

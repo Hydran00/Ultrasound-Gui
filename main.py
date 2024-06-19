@@ -1,16 +1,5 @@
 import subprocess
 import sys, os
-# source ros2 envs
-# shell_type = os.readlink('/proc/%d/exe' % os.getppid())
-# if "zsh" in shell_type:
-#     subprocess.call(". ./ros_source.zsh", executable="/bin/zsh", shell=True)
-# elif "bash" in shell_type:
-#     # assume Bash
-#     subprocess.call(". ./ros_source.sh",  executable="/bin/bash", shell=True)
-# else:
-#     print("Unknown shell, supported are zsh and bash")
-#     exit(1)
-
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit, QListWidget, QVBoxLayout, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
@@ -45,8 +34,6 @@ class MainWindow(QWidget):
 
         # Create QLabel to display the current frame
         self.frame_label = QLabel()
-        # self.frame_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-        self.frame_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.frame_label, 0, 2, -1, 1)  # Span all rows
 
         # Start the QTimer to update the frame
@@ -83,9 +70,9 @@ class MainWindow(QWidget):
                 # Select the network interface to use
                 net_selection_layout = QVBoxLayout()
                 label = QLabel()
-                label.setText("Select the network interface:")
+                label.setText("Select the network\n interface:")
                 label.setAlignment(Qt.AlignLeft)
-                label.setFixedSize(300, 30)
+                label.setFixedSize(200, 45)
                 net_selection_layout.addWidget(label)
                 self.net_interfaces = utils.get_net_interfaces()
                 self.net_interface_switch = QListWidget()
@@ -128,7 +115,7 @@ class MainWindow(QWidget):
         button_launch.setMinimumSize(150, 100)
         handle_layout.addWidget(button_launch, Qt.AlignCenter)
         
-        layout.addLayout(handle_layout, len(commands), 0, 1, 2)
+        # layout.addLayout(handle_layout, len(commands), 0, 1, 2)
 
 
         # Button to toggle bounding_box parameter

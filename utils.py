@@ -14,5 +14,8 @@ def get_net_interfaces():
     proc = subprocess.Popen(["ls /sys/class/net"], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     out = out.decode().split("\n")
+    # remove last empty element
+    out.pop()
+    out.insert(0, "default")
     return out
     
