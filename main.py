@@ -14,7 +14,9 @@ from std_msgs.msg import Bool
 import qdarkstyle  # Import the qdarkstyle library
 
 from buttons.base import BaseButton
+from buttons.motion_handle import HandleButton
 from buttons.tcp_endpoint import TcpEndpointButton
+from buttons.ft_calibration import FTCalibrationButton
 
 class MainWindow(QWidget):
 
@@ -25,6 +27,8 @@ class MainWindow(QWidget):
 
         self.setWindowTitle("Control Panel")
         self.setWindowIcon(QtGui.QIcon('assets/logo.png'))
+        # set size
+        self.setFixedSize(1000, 800)
         layout = QGridLayout()
         self.setLayout(layout)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -50,6 +54,7 @@ class MainWindow(QWidget):
         text_box_command_layouts = []
         for i, command in enumerate(commands):
             output_textbox = QTextEdit()
+            output_textbox.setReadOnly(True)
             layout.addWidget(output_textbox, i, 1)
 
             text_box_command_layout = QVBoxLayout()
@@ -97,26 +102,17 @@ class MainWindow(QWidget):
 
 
         handle_layout = QHBoxLayout()
-        # add interactive marker
-        cmd = 'ros2 run controller_manager spawner motion_control_handle -c /controller_manager'
-        button_launch = BaseButton(cmd, "Start Motion Handle", None)
-        button_launch.setMinimumSize(150, 100)
-        handle_layout.addWidget(button_launch, Qt.AlignCenter)
-        
-        # add interactive marker 
-        cmd = 'ros2 run controller_manager unspawner motion_control_handle -c /controller_manager'
-        button_launch = BaseButton(cmd, "Kill Motion Handle", None)
-        button_launch.setMinimumSize(150, 100)
-        handle_layout.addWidget(button_launch, Qt.AlignCenter)
+        # add interactive marker button
+        button_handle = HandleButton()
+        button_handle.setFixedSize(150, 100)
+        handle_layout.addWidget(button_handle, Qt.AlignCenter)
         
         # add ft sensor calibration
-        cmd = 'ros2 service call /bus0/ft_sensor0/reset_wrench rokubimini_msgs/srv/ResetWrench "{desired_wrench: {force: {x: 0.0, y: 0.0, z: 0.0}, torque: {x: 0.0, y: 0.0, z: 0.0}}}"'
-        button_launch = BaseButton(cmd, "Calibrate F/T Sensor", None)
-        button_launch.setMinimumSize(150, 100)
-        handle_layout.addWidget(button_launch, Qt.AlignCenter)
+        button_ft_calibration = FTCalibrationButton()
+        button_ft_calibration.setFixedSize(150, 100)
+        handle_layout.addWidget(button_ft_calibration, Qt.AlignCenter)
         
-        # layout.addLayout(handle_layout, len(commands), 0, 1, 2)
-
+        layout.addLayout(handle_layout, len(commands), 0, 1, 2)
 
         # Button to toggle bounding_box parameter
         bounding_box_button = QPushButton("Toggle Bounding Box")
@@ -126,6 +122,7 @@ class MainWindow(QWidget):
 
         # QLineEdit to display and edit the value of self.bounding_box
         self.bounding_box_edit = QLineEdit(str(self.bounding_box))
+
         self.bounding_box_edit.setFixedWidth(100)  # Set the width according to your preference
         self.bounding_box_edit.setReadOnly(True)   # Make it read-only
         layout.addWidget(self.bounding_box_edit, len(commands) + 1, 1)
