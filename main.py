@@ -28,7 +28,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("Control Panel")
         self.setWindowIcon(QtGui.QIcon('assets/logo.png'))
         # set size
-        self.setFixedSize(1000, 800)
+        self.setMinimumSize(1000, 800)
         layout = QGridLayout()
         self.setLayout(layout)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
