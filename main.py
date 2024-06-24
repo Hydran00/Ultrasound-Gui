@@ -1,5 +1,7 @@
 import subprocess
 import sys, os
+import cv2
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit, QListWidget, QVBoxLayout, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
@@ -17,7 +19,7 @@ from buttons.base import BaseButton
 from buttons.motion_handle import HandleButton
 from buttons.tcp_endpoint import TcpEndpointButton
 from buttons.ft_calibration import FTCalibrationButton
-
+from us_stream import USImageSubscriber
 class MainWindow(QWidget):
 
     def __init__(self):
@@ -144,6 +146,14 @@ class MainWindow(QWidget):
         self.scaling_factor_edit.setFixedWidth(100)  # Set the width according to your preference
         self.scaling_factor_edit.setReadOnly(True)   # Make it read-only
         layout.addWidget(self.scaling_factor_edit, len(commands) + 4, 1)
+
+        # ultrasound image feedback
+        us_image_feedback = USImageSubscriber(layout)
+        
+
+
+
+
 
     def toggle_bounding_box(self):
         self.bounding_box = int(not self.bounding_box)
