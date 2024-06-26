@@ -59,7 +59,7 @@ class SubprocessButton(QPushButton):
         if not self.running:
             self.running = True
             self.set_active_process_button_color()
-            self.setText(self.label + " running")           
+            self.setText(self.label + "\nrunning")           
             self.process.start(self.command)
             self.process.readyReadStandardOutput.connect(self.read_output)
             self.process.readyReadStandardError.connect(self.read_output)
