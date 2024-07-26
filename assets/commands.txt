@@ -1,4 +1,4 @@
 ros2 launch follower_launcher follower_launcher.launch.py
 ros2 launch leader_launcher leader_launcher.launch.py
 ros2 launch ros_tcp_endpoint endpoint.launch.py
-sudo -u <username> "${PWD%%/Ultrasound-Demo/*}/Ultrasound-Demo/follower/VRBuilds/release.x86_64"
+/usr/bin/sudo -u nardi /home/nardi/Ultrasound-Demo/follower/VRBuilds/release.x86_64
