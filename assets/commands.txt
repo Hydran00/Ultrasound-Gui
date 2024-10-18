@@ -1,4 +1,4 @@
 ros2 launch follower_launcher follower_launcher.launch.py
 ros2 launch leader_launcher leader_launcher.launch.py
 ros2 launch ros_tcp_endpoint endpoint.launch.py
-/usr/bin/sudo -u zotac01 /home/zotac01/Desktop/Ultrasound-Builds/release.x86_64
+/usr/bin/sudo -u zotac01 /home/zotac01/Desktop/Ultrasound-Builds/release.x86_64 -screen-fullscreen 0
