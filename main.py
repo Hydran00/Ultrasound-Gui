@@ -2,7 +2,7 @@ import subprocess
 import sys, os
 import cv2
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QTextEdit, QLabel, QSizePolicy, QLineEdit, QListWidget, QVBoxLayout, QHBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QPlainTextEdit, QLabel, QSizePolicy, QLineEdit, QListWidget, QVBoxLayout, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import QProcess, pyqtSlot
@@ -50,12 +50,14 @@ class MainWindow(QWidget):
         # Dictionary to hold buttons, text boxes, and scroll buttons
         self.button_textbox_map = {}
 
+
+        
         # add buttons, text boxes, and scroll buttons
         commands = utils.read_from_file("assets/commands.txt")
         labels = utils.read_from_file("assets/labels.txt")
         text_box_command_layouts = []
         for i, command in enumerate(commands):
-            output_textbox = QTextEdit()
+            output_textbox = QPlainTextEdit()
             output_textbox.setReadOnly(True)
             layout.addWidget(output_textbox, i, 1)
 
@@ -73,7 +75,26 @@ class MainWindow(QWidget):
 
             print("Adding button for command: ", command)
             
-            if "ros_tcp_endpoint" in command:
+            if "follower" in command:
+                # Switch to select between the Realsense and the Zed camera
+                camera_selection_layout = QVBoxLayout()
+                label = QLabel()
+                label.setText("Select the camera:")
+                label.setAlignment(Qt.AlignLeft)
+                label.setFixedSize(200, 45)
+                camera_selection_layout.addWidget(label)
+                self.camera_switch = QListWidget()
+                self.camera_switch.addItems(["Realsense", "Zed (SMPL Tracking)"])
+                # set default camera to the first one
+                self.camera_switch.setCurrentRow(0)
+                self.camera_switch.setFixedSize(200, 100)
+                # Create the button
+                button_launch = BaseButton(command, labels[i], output_textbox, self.camera_switch)
+                camera_selection_layout.addWidget(self.camera_switch)
+                text_box_command_layout.addLayout(camera_selection_layout)
+                
+
+            elif "ros_tcp_endpoint" in command:
                 # Select the network interface to use
                 net_selection_layout = QVBoxLayout()
                 label = QLabel()
@@ -116,7 +137,7 @@ class MainWindow(QWidget):
         
         layout.addLayout(handle_layout, len(commands), 0, 1, 2)
         # ultrasound image feedback
-        self.us_image_feedback = USImageSubscriber(layout)  
+        # self.us_image_feedback = USImageSubscriber(layout)  
             
     def resizeEvent(self, event):
         # Resize the pixmap when the window is resized
