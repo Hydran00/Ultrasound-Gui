@@ -20,6 +20,18 @@ from buttons.motion_handle import HandleButton
 from buttons.tcp_endpoint import TcpEndpointButton
 from buttons.ft_calibration import FTCalibrationButton
 from us_stream import USImageSubscriber
+
+# { 'param name' , ['default idx', ['options']] }
+ARGS= {
+    "use_ft_sensor": [1,[True,False]], # True or False
+    "camera_type": [0,["realsense","zed"]], # realsense or zed
+    "robot_type": [0,["kuka","ur3e"]], # kuka or ur3e
+    "video_stream":  [0,[True,False]], # True or False
+    "point_cloud_stream": [0,[True,False]], # True or False
+    "encode_streams": [0,[True,False]], # True or False
+}
+
+
 class MainWindow(QWidget):
 
     def __init__(self):
@@ -31,8 +43,8 @@ class MainWindow(QWidget):
         self.setWindowIcon(QtGui.QIcon('assets/logo.png'))
         # set size
         self.setMinimumSize(1000, 800)
-        layout = QGridLayout()
-        self.setLayout(layout)
+        app_layout = QVBoxLayout()
+        self.setLayout(app_layout)
         # self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         # Apply the PyQTDark theme
@@ -40,8 +52,6 @@ class MainWindow(QWidget):
 
         # Create QLabel to display the current frame
         self.frame_label = QLabel()
-        layout.addWidget(self.frame_label, 0, 2, -1, 1)  # Span all rows
-
         # Start the QTimer to update the frame
         self.timer = QTimer(self)
         # self.timer.timeout.connect(self.update_frame)
@@ -50,8 +60,40 @@ class MainWindow(QWidget):
         # Dictionary to hold buttons, text boxes, and scroll buttons
         self.button_textbox_map = {}
 
+        # divide app layout into two rows (first options, second for buttons and text boxes)
+        opt_layout = QHBoxLayout()
+        layout = QGridLayout()
 
-        
+        # add options
+        use_ft_sensor_layout = utils.create_checkbox_options_layout("Use FT Sensor")
+        camera_selection_layout = utils.create_combo_options_layout("Select the camera:", ARGS["camera_type"][1], ARGS["camera_type"][0])
+        robot_selection_layout = utils.create_combo_options_layout("Select the robot:", ARGS["robot_type"][1], ARGS["robot_type"][0])
+        video_stream_layout = utils.create_checkbox_options_layout("Video Stream")
+        point_cloud_stream_layout = utils.create_checkbox_options_layout("Point Cloud Stream")
+        encode_streams_layout = utils.create_checkbox_options_layout("Encode Streams")
+
+        # Add point cloud stream option
+        point_cloud_stream_layout = QVBoxLayout()
+        label = QLabel()
+        label.setText("Point Cloud Stream:")
+        label.setAlignment(Qt.AlignLeft)
+        label.setFixedSize(200, 45)
+        point_cloud_stream_layout.addWidget(label)
+        self.point_cloud_stream_switch = QCheckBox()
+        # set default
+
+        # add to layout
+        opt_layout.addLayout(use_ft_sensor_layout, Qt.AlignCenter)          
+        opt_layout.addLayout(camera_selection_layout, Qt.AlignCenter)
+        opt_layout.addLayout(robot_selection_layout, Qt.AlignCenter)
+        opt_layout.addLayout(video_stream_layout, Qt.AlignCenter)
+        opt_layout.addLayout(point_cloud_stream_layout, Qt.AlignCenter)
+        opt_layout.addLayout(encode_streams_layout, Qt.AlignCenter)
+
+        # add options
+        app_layout.addLayout(opt_layout)
+
+
         # add buttons, text boxes, and scroll buttons
         commands = utils.read_from_file("assets/commands.txt")
         labels = utils.read_from_file("assets/labels.txt")
@@ -75,26 +117,10 @@ class MainWindow(QWidget):
 
             print("Adding button for command: ", command)
             
-            if "follower" in command:
-                # Switch to select between the Realsense and the Zed camera
-                camera_selection_layout = QVBoxLayout()
-                label = QLabel()
-                label.setText("Select the camera:")
-                label.setAlignment(Qt.AlignLeft)
-                label.setFixedSize(200, 45)
-                camera_selection_layout.addWidget(label)
-                self.camera_switch = QListWidget()
-                self.camera_switch.addItems(["Realsense", "Zed (SMPL Tracking)"])
-                # set default camera to the first one
-                self.camera_switch.setCurrentRow(0)
-                self.camera_switch.setFixedSize(200, 100)
-                # Create the button
-                button_launch = BaseButton(command, labels[i], output_textbox, self.camera_switch)
-                camera_selection_layout.addWidget(self.camera_switch)
-                text_box_command_layout.addLayout(camera_selection_layout)
-                
+            # if "follower" in command:
 
-            elif "ros_tcp_endpoint" in command:
+
+            if "ros_tcp_endpoint" in command:
                 # Select the network interface to use
                 net_selection_layout = QVBoxLayout()
                 label = QLabel()
@@ -137,7 +163,8 @@ class MainWindow(QWidget):
         
         layout.addLayout(handle_layout, len(commands), 0, 1, 2)
         # ultrasound image feedback
-        # self.us_image_feedback = USImageSubscriber(layout)  
+        # self.us_image_feedback = USImageSubscriber(layout)
+        app_layout.addLayout(layout)  
             
     def resizeEvent(self, event):
         # Resize the pixmap when the window is resized
