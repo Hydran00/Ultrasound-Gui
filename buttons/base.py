@@ -2,8 +2,18 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import QProcess
 
+ARGS= {
+    "use_ft_sensor": [1,[True,False]], # True or False
+    "camera_type": [0,["realsense","zed"]], # realsense or zed
+    "robot_type": [0,["kuka","ur3e"]], # kuka or ur3e
+    "video_stream":  [0,[True,False]], # True or False
+    "point_cloud_stream": [0,[True,False]], # True or False
+    "encode_streams": [0,[True,False]], # True or False
+}
+
+
 class BaseButton(QPushButton):
-    def __init__(self, command, label, output_widget, parent=None):
+    def __init__(self, command, label, output_widget, parent=None, options=None):
         super().__init__(parent)
         self.label = label
         self.output_widget = output_widget
@@ -13,6 +23,7 @@ class BaseButton(QPushButton):
         self.process = QProcess()
         self.running = False
         self.color_index = 0
+        self.options = options
         # extract color from qdark theme
         self.inactive_process_button_style = self.styleSheet() 
         self.active_process_button_color = QColor(87,150,244)
@@ -36,7 +47,14 @@ class BaseButton(QPushButton):
     def start_subprocess(self):
         self.running = True
         # self.setStyleSheet("background-color: green;")
-        self.setText(self.label + " running")           
+        self.setText(self.label + " running")
+        
+        opt_suffix = ""
+        if self.options is not None:
+            for i in range(len(self.options)):
+                opt_suffix += " " + ARGS[self.options[i]][1][self.options[i]]
+                ....
+
         self.process.start(self.command)
         self.process.readyReadStandardOutput.connect(self.read_output)
         self.process.finished.connect(self.on_finished)

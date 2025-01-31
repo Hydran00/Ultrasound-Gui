@@ -38,7 +38,7 @@ def create_combo_options_layout(label_txt, options, default_index):
     # set size
     combobox.setFixedSize(200, 30)
     layout.addWidget(combobox)
-    return layout
+    return combobox,layout
 
 
 def create_checkbox_options_layout(label_txt):
@@ -55,6 +55,5 @@ def create_checkbox_options_layout(label_txt):
     checkbox.setStyleSheet(
         "QCheckBox::indicator" "{" "width :40px;" "height : 40px;" "}"
     )
-    # set onchecked add option to command text
 
-    return layout
+    return checkbox, layout

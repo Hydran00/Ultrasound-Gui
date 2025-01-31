@@ -65,12 +65,14 @@ class MainWindow(QWidget):
         layout = QGridLayout()
 
         # add options
-        use_ft_sensor_layout = utils.create_checkbox_options_layout("Use FT Sensor")
-        camera_selection_layout = utils.create_combo_options_layout("Select the camera:", ARGS["camera_type"][1], ARGS["camera_type"][0])
-        robot_selection_layout = utils.create_combo_options_layout("Select the robot:", ARGS["robot_type"][1], ARGS["robot_type"][0])
-        video_stream_layout = utils.create_checkbox_options_layout("Video Stream")
-        point_cloud_stream_layout = utils.create_checkbox_options_layout("Point Cloud Stream")
-        encode_streams_layout = utils.create_checkbox_options_layout("Encode Streams")
+        ch_ft, use_ft_sensor_layout = utils.create_checkbox_options_layout("Use FT Sensor")
+        camera_type, camera_selection_layout = utils.create_combo_options_layout("Select the camera:", ARGS["camera_type"][1], ARGS["camera_type"][0])
+        robot_type, robot_selection_layout = utils.create_combo_options_layout("Select the robot:", ARGS["robot_type"][1], ARGS["robot_type"][0])
+        ch_video_stream,video_stream_layout = utils.create_checkbox_options_layout("Video Stream")
+        ch_point_cloud, point_cloud_stream_layout = utils.create_checkbox_options_layout("Point Cloud Stream")
+        ch_encode_stream, encode_streams_layout = utils.create_checkbox_options_layout("Encode Streams")
+
+        options = [ch_ft, camera_type, robot_type, ch_video_stream, ch_point_cloud, ch_encode_stream]
 
         # Add point cloud stream option
         point_cloud_stream_layout = QVBoxLayout()
@@ -117,9 +119,6 @@ class MainWindow(QWidget):
 
             print("Adding button for command: ", command)
             
-            # if "follower" in command:
-
-
             if "ros_tcp_endpoint" in command:
                 # Select the network interface to use
                 net_selection_layout = QVBoxLayout()
@@ -140,7 +139,12 @@ class MainWindow(QWidget):
                 text_box_command_layout.addLayout(net_selection_layout, Qt.AlignCenter)
 
             else:
-                button_launch = BaseButton(command, labels[i], output_textbox)
+                if "follower" in command:
+                    button_launch = BaseButton(command, labels[i], output_textbox, options)
+                elif "leader" in command:
+                    button_launch = BaseButton(command, labels[i], output_textbox, options)
+                else:
+                    button_launch = BaseButton(command, labels[i], output_textbox)
             
             button_launch.setMinimumSize(150, 100)
             layout.addWidget(button_launch, i, 0)
