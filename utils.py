@@ -1,6 +1,7 @@
 import os
 import subprocess
-from PyQt5.QtWidgets import QVBoxLayout, QLabel, QComboBox, QCheckBox
+from PyQt5.QtWidgets import QVBoxLayout, QLabel, QComboBox, QCheckBox, QLineEdit
+from PyQt5.QtGui import QDoubleValidator
 
 
 def read_from_file(filename):
@@ -25,35 +26,50 @@ def get_net_interfaces():
     return out
 
 
-def create_combo_options_layout(label_txt, options, default_index):
+def create_combo_option_layout(label_txt, options, default_index):
     layout = QVBoxLayout()
     label = QLabel()
     label.setText(label_txt)
     layout.addWidget(label)
     # set size
-    label.setFixedSize(200, 30)
+    # label.setFixedSize(200, 50)
     combobox = QComboBox()
     combobox.addItems(options)
     combobox.setCurrentIndex(default_index)
     # set size
-    combobox.setFixedSize(200, 30)
+    # combobox.setFixedSize(200, 30)
     layout.addWidget(combobox)
-    return combobox,layout
+    return combobox, layout
 
 
-def create_checkbox_options_layout(label_txt):
+def create_checkbox_option_layout(label_txt, default_state):
     layout = QVBoxLayout()
     label = QLabel()
     label.setText(label_txt)
-    label.setFixedSize(200, 30)
+    # label.setFixedSize(200, 50)
     layout.addWidget(label)
 
     # add checkbox
     checkbox = QCheckBox()
-    checkbox.setFixedSize(200, 30)
+    # checkbox.setFixedSize(200, 30)
     layout.addWidget(checkbox)
     checkbox.setStyleSheet(
         "QCheckBox::indicator" "{" "width :40px;" "height : 40px;" "}"
     )
-
+    checkbox.setChecked(default_state)
     return checkbox, layout
+
+
+def create_double_input_layout(label_txt, default_value):
+    layout = QVBoxLayout()
+    label = QLabel()
+    label.setText(label_txt)
+    # label.setFixedSize(200, 50)
+    layout.addWidget(label)
+
+    input_field = QLineEdit()
+    validator = QDoubleValidator(0.0, 2.0, 3, input_field)
+    input_field.setValidator(validator)
+    layout.addWidget(input_field)
+    input_field.setText(str(default_value))
+    return input_field, layout

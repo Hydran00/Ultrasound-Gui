@@ -2,31 +2,24 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import QProcess
 
-ARGS= {
-    "use_ft_sensor": [1,[True,False]], # True or False
-    "camera_type": [0,["realsense","zed"]], # realsense or zed
-    "robot_type": [0,["kuka","ur3e"]], # kuka or ur3e
-    "video_stream":  [0,[True,False]], # True or False
-    "point_cloud_stream": [0,[True,False]], # True or False
-    "encode_streams": [0,[True,False]], # True or False
-}
-
 
 class BaseButton(QPushButton):
-    def __init__(self, command, label, output_widget, parent=None, options=None):
+    def __init__(
+        self, command, label, output_widget, parent=None, options_buttons=None
+    ):
         super().__init__(parent)
         self.label = label
         self.output_widget = output_widget
         self.setText(self.label)
-        self.setFont(QFont('Arial', 12)) 
+        self.setFont(QFont("Arial", 12))
         self.command = command
         self.process = QProcess()
         self.running = False
         self.color_index = 0
-        self.options = options
+        self.options_buttons = options_buttons
         # extract color from qdark theme
-        self.inactive_process_button_style = self.styleSheet() 
-        self.active_process_button_color = QColor(87,150,244)
+        self.inactive_process_button_style = self.styleSheet()
+        self.active_process_button_color = QColor(87, 150, 244)
 
         self.set_inactive_process_button_color()
         self.clicked.connect(self.toggle_subprocess)
@@ -39,7 +32,9 @@ class BaseButton(QPushButton):
             self.start_subprocess()
 
     def set_active_process_button_color(self):
-        self.setStyleSheet("background-color: " + self.active_process_button_color.name() + ";")
+        self.setStyleSheet(
+            "background-color: " + self.active_process_button_color.name() + ";"
+        )
 
     def set_inactive_process_button_color(self):
         self.setStyleSheet(self.inactive_process_button_style)
@@ -48,25 +43,39 @@ class BaseButton(QPushButton):
         self.running = True
         # self.setStyleSheet("background-color: green;")
         self.setText(self.label + " running")
-        
-        opt_suffix = ""
-        if self.options is not None:
-            for i in range(len(self.options)):
-                opt_suffix += " " + ARGS[self.options[i]][1][self.options[i]]
-                ....
 
-        self.process.start(self.command)
-        self.process.readyReadStandardOutput.connect(self.read_output)
+        opt_suffix = ""
+        opt_command = self.command
+        if self.options_buttons is not None:
+            for i in range(len(self.options_buttons["switches"])):
+                (opt_name, switch) = self.options_buttons["switches"][i]
+                opt_command += " " + opt_name + ":=" + switch.currentText()
+
+            for i in range(len(self.options_buttons["checkboxes"])):
+                (opt_name, button) = self.options_buttons["checkboxes"][i]
+                if button.isChecked():
+                    opt_command += " " + opt_name + ":=true"
+                else:
+                    opt_command += " " + opt_name + ":=false"
+            for i in range(len(self.options_buttons["values"])):
+                (opt_name, button) = self.options_buttons["values"][i]
+                opt_command += " " + opt_name + ":=" + button.text()
+
+            # print("Command is: ", opt_command)
+        # print command to the output widget
+        self.output_widget.appendPlainText(opt_command)
+
+        self.process.start(opt_command)
+        # self.process.readyReadStandardOutput.connect(self.read_output)
         self.process.finished.connect(self.on_finished)
-            
+
     def kill_subprocess(self):
         # VR app must be closed manually to avoid crashing SteamVR
-        if "VR" not in self.label: 
+        if "VR" not in self.label:
             self.setText(self.label + " terminating")
             killer = QProcess()
             killer.start("kill -SIGINT " + str(self.process.processId()))
             killed = killer.waitForFinished(1000)
-
 
     # def read_output(self):
     #     if self.output_widget is not None:
@@ -104,7 +113,9 @@ class BaseButton(QPushButton):
             if self.output_widget.blockCount() > max_lines:
                 cursor = self.output_widget.textCursor()
                 cursor.setPosition(0)
-                cursor.movePosition(cursor.Down, cursor.KeepAnchor, cursor.blockNumber() - max_lines)
+                cursor.movePosition(
+                    cursor.Down, cursor.KeepAnchor, cursor.blockNumber() - max_lines
+                )
                 cursor.removeSelectedText()
 
             # Scroll to bottom only if previously at the bottom
