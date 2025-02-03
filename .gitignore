@@ -5,3 +5,4 @@ launcher.py
 __pycache__
 *.bash
 *.sh
+options.json

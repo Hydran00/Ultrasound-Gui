@@ -1,6 +1,7 @@
 import subprocess
 import sys, os
 import cv2
+import argparse
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
     QApplication,
@@ -35,7 +36,7 @@ from buttons.tcp_endpoint import TcpEndpointButton
 from buttons.ft_calibration import FTCalibrationButton
 from us_stream import USImageSubscriber
 
-# { 'param name' , ['default idx', ['options']] }
+# { 'param name' , ['default idx or value', ['options']] }
 ARGS = {
     "use_ft_sensor": True,  # True or False
     "camera_type": [0, ["realsense", "zed"]],  # realsense or zed
@@ -50,8 +51,20 @@ ARGS = {
 
 class MainWindow(QWidget):
 
-    def __init__(self):
+    def __init__(self, config_file=None):
         super().__init__()
+        # if config_file is not None:
+        #     with open(config_file, "r") as f:
+        #         for line in f:
+        #             key, value = line.split("=")
+        #             if key in ARGS:
+        #                 if key == "delay":
+        #                     ARGS[key] = float(value)
+        #                 elif key == "use_ft_sensor":
+        #                     ARGS[key] = value == "True"
+        #                 else:
+        #                     ARGS[key] = value
+
         self.bounding_box = int(0)
         self.scaling_factor = float(1)
 
@@ -227,7 +240,21 @@ class MainWindow(QWidget):
         button_ft_calibration.setFixedSize(150, 100)
         handle_layout.addWidget(button_ft_calibration, Qt.AlignCenter)
 
-        layout.addLayout(handle_layout, len(commands), 0, 1, 2)
+        # save options button
+        button_save_options = QPushButton("Save\nOptions")
+        button_save_options.setText("Save\nOptions")
+        button_save_options.setFont(QFont("Arial", 12))
+
+        def save_options():
+            # Save the options to a file
+            with open("assets/options.txt", "w") as f:
+                for key, value in ARGS.items():
+                    f.write(f"{key}={value}\n")
+
+        button_save_options.clicked.connect(save_options)
+        handle_layout.addWidget(button_save_options, Qt.AlignCenter)
+
+        layout.addLayout(handle_layout, len(commands), 0)
         # ultrasound image feedback
         # self.us_image_feedback = USImageSubscriber(layout)
         app_layout.addLayout(layout)
@@ -245,9 +272,15 @@ class MainWindow(QWidget):
 
 
 if __name__ == "__main__":
+    # get arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--load_conf", type=str, default="assets/options.txt", required=False
+    )
+
     rclpy.init(args=None)
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(parser.parse_args().load_conf)
     window.show()
     try:
         sys.exit(app.exec_())

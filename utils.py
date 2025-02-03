@@ -68,8 +68,10 @@ def create_double_input_layout(label_txt, default_value):
     layout.addWidget(label)
 
     input_field = QLineEdit()
-    validator = QDoubleValidator(0.0, 2.0, 3, input_field)
+    validator = QDoubleValidator(0.0, 2.0, 3)
     input_field.setValidator(validator)
     layout.addWidget(input_field)
     input_field.setText(str(default_value))
+    # set check lambda function
+
     return input_field, layout

@@ -1,0 +1,8 @@
+use_ft_sensor=True
+camera_type=[0, ['realsense', 'zed']]
+robot_type=[0, ['kuka', 'ur3e']]
+video_stream=False
+point_cloud_stream=True
+encode_streams=False
+use_fixtures=False
+delay=0.0

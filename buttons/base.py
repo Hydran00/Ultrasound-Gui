@@ -66,7 +66,7 @@ class BaseButton(QPushButton):
         self.output_widget.appendPlainText(opt_command)
 
         self.process.start(opt_command)
-        # self.process.readyReadStandardOutput.connect(self.read_output)
+        self.process.readyReadStandardOutput.connect(self.read_output)
         self.process.finished.connect(self.on_finished)
 
     def kill_subprocess(self):
