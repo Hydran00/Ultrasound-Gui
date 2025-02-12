@@ -63,7 +63,7 @@ class BaseButton(QPushButton):
 
             # print("Command is: ", opt_command)
         # print command to the output widget
-        self.output_widget.appendPlainText(opt_command)
+        self.output_widget.appendPlainText("Running:\n" + opt_command + "\n")
 
         self.process.start(opt_command)
         self.process.readyReadStandardOutput.connect(self.read_output)
@@ -100,6 +100,8 @@ class BaseButton(QPushButton):
             output = self.process.readAllStandardOutput().data().decode().strip()
             error = self.process.readAllStandardError().data().decode().strip()
             output_text = output + error
+            # replace windows newlines with unix newlines
+            output_text = output_text.replace("\r\n", "\n").strip()
 
             # Get current scrollbar position and scroll state
             scrollbar = self.output_widget.verticalScrollBar()

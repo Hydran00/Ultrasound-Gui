@@ -6,3 +6,5 @@ __pycache__
 *.bash
 *.sh
 options.json
+**.txt
+**.ply

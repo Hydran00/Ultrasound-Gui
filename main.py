@@ -1,8 +1,14 @@
 import subprocess
 import sys, os
-import cv2
 import argparse
-from PyQt5 import QtCore
+
+from PyQt5.QtCore import QLibraryInfo
+import cv2
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = QLibraryInfo.location(
+    QLibraryInfo.PluginsPath
+)
+
+# from PyQt5 import QtCore
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -24,22 +30,22 @@ from PyQt5.QtCore import QProcess, pyqtSlot
 from PyQt5.QtGui import QImage, QColor
 from PyQt5 import QtGui
 import utils
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
-from std_msgs.msg import Bool
+# import rclpy
+# from rclpy.node import Node
+# from std_msgs.msg import String
+# from std_msgs.msg import Bool
 import qdarkstyle  # Import the qdarkstyle library
 
 from buttons.base import BaseButton
 from buttons.motion_handle import HandleButton
 from buttons.tcp_endpoint import TcpEndpointButton
 from buttons.ft_calibration import FTCalibrationButton
-from us_stream import USImageSubscriber
+# from us_stream import USImageSubscriber
 
 # { 'param name' , ['default idx or value', ['options']] }
 ARGS = {
-    "use_ft_sensor": True,  # True or False
-    "camera_type": [0, ["realsense", "zed"]],  # realsense or zed
+    "use_ft_sensor": False,  # True or False
+    "camera_type": [1, ["realsense", "zed"]],  # realsense or zed
     "robot_type": [0, ["kuka", "ur3e"]],  # kuka or ur3e
     "video_stream": False,  # True or False
     "point_cloud_stream": True,  # True or False
@@ -278,7 +284,7 @@ if __name__ == "__main__":
         "--load_conf", type=str, default="assets/options.txt", required=False
     )
 
-    rclpy.init(args=None)
+    # rclpy.init(args=None)
     app = QApplication(sys.argv)
     window = MainWindow(parser.parse_args().load_conf)
     window.show()
@@ -286,4 +292,5 @@ if __name__ == "__main__":
         sys.exit(app.exec_())
     finally:
         # Clean up when the application is closed
-        rclpy.shutdown()
+        # rclpy.shutdown()
+        pass
